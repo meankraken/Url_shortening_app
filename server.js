@@ -1,20 +1,90 @@
 'use strict';
 
+global.jQuery = require('jquery');
+var jquery = require('jquery');
 var express = require('express');
-var routes = require('./app/routes/index.js');
-var mongoose = require('mongoose');
-var passport = require('passport');
 var session = require('express-session');
+
 
 var app = express();
 require('dotenv').load();
-require('./app/config/passport')(passport);
 
-mongoose.connect(process.env.MONGO_URI);
+var months = ["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
 
-app.use('/controllers', express.static(process.cwd() + '/app/controllers'));
-app.use('/public', express.static(process.cwd() + '/public'));
+
+var path = process.cwd();
+
+
+
 app.use('/common', express.static(process.cwd() + '/app/common'));
+app.use('/public', express.static(process.cwd() + '/public'));
+
+app.get('/',function(req,res,next) {
+	res.sendFile(path + "/public/index.html");
+
+});
+
+app.get('/:id',function(req,res) {
+	var isDate = false;
+	var date = req.params.id; 
+	var month = "";
+	var year = 0;
+	var day = 0;
+	var dateStr = "";
+	for (var i=0; i<months.length; i++) {
+		if (date.toUpperCase().includes(months[i])) {
+			isDate = true;
+			var arr = months[i].toLowerCase().split("");
+			arr[0] = arr[0].toUpperCase();
+			month = arr.join("");
+		}
+	}
+	if (isDate) {
+		if (date.match(/(\d)+/g)) {
+			var nums = date.match(/(\d)+/g);
+			if (nums.length<2) {
+				isDate = false;
+			}
+			else {
+				var num1 = parseInt(nums[0]);
+				var num2 = parseInt(nums[1]);
+				if (num1 < num2) {
+					day = num1;
+					year = num2;
+				}
+				else {
+					day = num2;
+					year = num1;
+				}
+				if (day<=31) {
+				dateStr = month + " " + day + ", " + year;
+				var dateVar = new Date(dateStr);
+				var reply = { 
+					unix: dateVar.getTime()/1000,
+					natural: dateStr 
+				};
+				res.send(reply);
+				}
+				else {
+					isDate = false;
+				}
+			}
+		
+		}
+		else {
+			isDate = false;
+		}
+		
+	}
+	if (!isDate) {
+		res.send("Please enter a valid date - include the month, day, and year.");
+	}
+	
+	
+	
+});
+
+
 
 app.use(session({
 	secret: 'secretClementine',
@@ -22,10 +92,7 @@ app.use(session({
 	saveUninitialized: true
 }));
 
-app.use(passport.initialize());
-app.use(passport.session());
 
-routes(app, passport);
 
 var port = process.env.PORT || 8080;
 app.listen(port,  function () {
