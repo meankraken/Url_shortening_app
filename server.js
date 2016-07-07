@@ -21,8 +21,13 @@ app.use('/public', express.static(process.cwd() + '/public'));
 app.get('/',function(req,res,next) {
 	var ip = req.headers['x-forwarded-for'];
 	var lang = req.headers["accept-language"];
-	res.write("OS:" + os.platform());
-	res.write("Lang:" + lang);
+	var opSys = os.release().toString() + " " + os.hostname().toString() + " " + os.platform().toString() + " " + os.arch().toString();
+	var retObj = { 
+		ip: ip, 
+		language: lang,
+		OS: opSys
+	};
+	res.write(JSON.stringify(retObj));
 	res.end();
 	
 });
