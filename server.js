@@ -8,10 +8,9 @@ var os = require('os');
 
 var app = express();
 require('dotenv').load();
-
-
-
 var path = process.cwd();
+var urls = [];
+var index = 0;
 
 
 
@@ -19,17 +18,30 @@ app.use('/common', express.static(process.cwd() + '/app/common'));
 app.use('/public', express.static(process.cwd() + '/public'));
 
 app.get('/',function(req,res,next) {
-	var ip = req.headers['x-forwarded-for'];
-	var lang = req.headers["accept-language"];
-	var opSys = os.release().toString() + " " + os.hostname().toString() + " " + os.platform().toString() + " " + os.arch().toString();
-	var retObj = { 
-		ip: ip, 
-		language: lang,
-		OS: opSys
-	};
-	res.write(JSON.stringify(retObj));
-	res.end();
+	var url = req.query.url; 
+	if (url) { 
+		next();	
+	}
+	else {
+		res.sendfile("./app/common/index.html");
+	}
 	
+});
+
+app.get('/', function(req,res,next) {
+	var url = req.query.url; 
+	if (url.match(/^http[s]?:\/\/.*(.com|.net|.org|.edu)\/?.*/gmi)) {
+		urls.push(url);
+		index++;
+		res.end("Your shortened url is: " + req.protocol + "://" + req.host + "/" + index);
+	}
+	else {
+		next();
+	}
+});
+
+app.get('/', function(req,res) {
+	res.end("Please enter a url with a valid protocol and extension.");	
 });
 
 
