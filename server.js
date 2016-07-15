@@ -4,14 +4,37 @@ global.jQuery = require('jquery');
 var jquery = require('jquery');
 var express = require('express');
 var session = require('express-session');
-var os = require('os');
+var mongodb = require('mongodb');
 
 var app = express();
+var MongoClient = mongodb.MongoClient;
+
 require('dotenv').load();
 var path = process.cwd();
 var urls = [];
 var index = 0;
+var dbUrl = "mongodb://localhost:27017/theBase";
 
+MongoClient.connect(dbUrl, function(err, db) {
+	if (err) {
+		console.log("Error connecting to database:" + err);
+	}
+	else {
+		var urlCollection = db.collection('urls');
+		var doc = { data: "teh data", moreData: "mo data" };
+		urlCollection.insert(doc, function(err, result) {
+			if (err) {
+				console.log(err);
+			}
+			else {
+				console.log(result);
+			}
+		});
+		db.close();
+	}
+	
+
+});
 
 
 app.use('/common', express.static(process.cwd() + '/app/common'));
