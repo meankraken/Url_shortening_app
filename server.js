@@ -70,7 +70,9 @@ app.get('/', function(req,res,next) {
 function addDoc(db, count, req, res) {
 	db.collection('urls').insert({ _id: count+1, url: req.query.url });
 	db.close();
-	res.end("Your shortened url is: " + req.protocol + "://" + req.host + "/" + parseInt(count+1));
+	var reply = { shortUrl: req.protocol + "://" + req.host + "/" + parseInt(count+1) };
+	console.log(reply);
+	res.end(JSON.stringify(reply));
 }
 
 app.get('/', function(req,res) {
