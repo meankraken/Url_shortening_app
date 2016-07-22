@@ -1,4 +1,21 @@
 .form-control {
     width:500px;
+    display:inline-block;
 }
 
+
+.myButton {
+    height:33px;
+    width:75px;
+    border:3px solid #8DDDF7;
+    border-radius:10px;
+    display:inline-block;
+    position:absolute;
+    margin-left:5px;
+    text-align:center;
+    color: #19647D;
+    line-height:27px;
+    cursor:pointer;
+    font-weight:700;
+    background-color:white;
+}

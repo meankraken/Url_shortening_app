@@ -14,31 +14,12 @@ var path = process.cwd();
 var urls = [];
 var index = 0;
 var dbUrl = "mongodb://localhost:27017/theBase";
-
-MongoClient.connect(dbUrl, function(err, db) {
-	if (err) {
-		console.log("Error connecting to database:" + err);
-	}
-	else {
-		var urlCollection = db.collection('urls');
-		var doc = { data: "teh data", moreData: "mo data" };
-		urlCollection.insert(doc, function(err, result) {
-			if (err) {
-				console.log(err);
-			}
-			else {
-				console.log(result);
-			}
-		});
-		db.close();
-	}
-	
-
-});
+var numDocs = 0;
 
 
 app.use('/common', express.static(process.cwd() + '/app/common'));
 app.use('/public', express.static(process.cwd() + '/public'));
+app.use('/scripts', express.static(process.cwd() + '/node_modules'));
 
 app.get('/',function(req,res,next) {
 	var url = req.query.url; 
@@ -54,17 +35,73 @@ app.get('/',function(req,res,next) {
 app.get('/', function(req,res,next) {
 	var url = req.query.url; 
 	if (url.match(/^http[s]?:\/\/.*(.com|.net|.org|.edu)\/?.*/gmi)) {
-		urls.push(url);
-		index++;
-		res.end("Your shortened url is: " + req.protocol + "://" + req.host + "/" + index);
+		MongoClient.connect(dbUrl, function(err, db) {
+			if (err) {
+				console.log(err);
+			}	
+			else {
+			
+				db.collection('urls').count({}, function(err,count) {
+					if (err) {
+						console.log(err);
+					}	
+					else {
+						numDocs = count;
+						console.log(count);
+						addDoc(db, count, req, res);
+					}
+					
+				});
+				
+				
+				
+			}
+			
+		
+			
+		});
+		
 	}
 	else {
 		next();
 	}
 });
 
+function addDoc(db, count, req, res) {
+	db.collection('urls').insert({ _id: count+1, url: req.query.url });
+	db.close();
+	res.end("Your shortened url is: " + req.protocol + "://" + req.host + "/" + parseInt(count+1));
+}
+
 app.get('/', function(req,res) {
-	res.end("Please enter a url with a valid protocol and extension.");	
+	res.end("Please enter a url with a valid protocol and extension.\nExample: http://www.google.com" );	
+});
+
+
+
+app.get('/:id', function(req,res) {
+	MongoClient.connect(dbUrl, function(err,db) {
+		var num = req.param('id');
+		var obj = { _id: parseInt(num) }; 
+		if (err) {
+			console.log(err);
+		}
+		else {
+			db.collection('urls').find(obj).toArray(function(err, result) {
+				if (err) {
+					console.log("Failed to find shortened url");
+				}
+				if (result.length==0) {
+					res.end("This index is not in the database.");
+				}
+				else {
+					res.redirect(result[0].url);
+				}
+			});
+			
+			db.close();
+		}
+	})
 });
 
 
